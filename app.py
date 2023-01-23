@@ -18,24 +18,28 @@ def main():
             st.warning("Dataframe is missing the following columns: " + ', '.join(missing_columns) + ". These columns are required to process the data.")
         else:
             try:
+                # linux timestamps
+                #df['time'] = pd.to_datetime(df['time']).map(pd.Timestamp.timestamp)
+                # DatetimeIndex
                 df['time'] = pd.to_datetime(df['time'])
                 st.success("Time column parsed as datetime objects.")
             except ValueError:
                 st.warning("An error occurred while trying to parse the 'time' column.")
             st.dataframe(df)
 
-            assets = df['asset'].unique()
-
+            df = df.query('type.str.contains("staking")', engine='python')
             df = df.groupby(['time', 'asset']).sum().reset_index()
             df = df.pivot(index='time', columns='asset', values='amount')
+
             df_accumulated = df.cumsum()
             st.dataframe(df_accumulated)
-            st.text(df_accumulated.index)
-            st.text(df_accumulated.dtypes)
 
             columns_to_plot = [col for col in df_accumulated.columns if '.S' in col]
-
-            st.area_chart(df_accumulated, columns_to_plot)
+            # assets = df_accumulated['asset'].unique()
+            for asset in columns_to_plot:
+                if ".S" in asset:
+                    st.text(str(asset) + " " + " | Total reward received: " + str(round(df_accumulated[asset].max(), 6)))
+                    st.bar_chart(df_accumulated[asset])
 
             #assets = df['asset'].unique()
             #chart = st.line_chart()
