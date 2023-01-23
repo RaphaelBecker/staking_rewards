@@ -38,7 +38,13 @@ def main():
             # assets = df_accumulated['asset'].unique()
             for asset in columns_to_plot:
                 if ".S" in asset:
-                    st.text(str(asset) + " " + " | Total reward received: " + str(round(df_accumulated[asset].max(), 6)))
+                    # first date
+                    # last date
+                    from_date = df_accumulated.index.min()
+                    to_date = df_accumulated.index.max()
+                    st.subheader(str(asset))
+                    st.text("Received between " + str(from_date) + " - " + str(to_date))
+                    st.text("Total reward received: " + str(round(df_accumulated[asset].max(), 6)))
                     st.bar_chart(df_accumulated[asset])
 
             #assets = df['asset'].unique()
