@@ -7,20 +7,33 @@ def create_database():
     conn = sqlite3.connect('kraken.db')
     c = conn.cursor()
     c.execute('''CREATE TABLE IF NOT EXISTS kraken
-                 (timestamp INTEGER, ticker TEXT, open REAL, high REAL, low REAL, close REAL)''')
+                 (timestamp INTEGER, open REAL, high REAL, low REAL, close REAL, vwap REAL, volume REAL, count REAL, ticker TEXT)''')
     conn.commit()
     conn.close()
 
 
-def get_data(ticker, start, end):
+def get_data(ticker, start):
+    """
+    Example requ: requests.get('https://api.kraken.com/0/public/OHLC?pair=XBTUSD')
+    :param ticker: str
+    :param start: linuxtmps
+    :return: pd.Dataframe
+    """
     url = 'https://api.kraken.com/0/public/OHLC'
-    params = {'pair': ticker, 'interval': 1, 'since': start}
+    params = {'pair': ticker, 'interval': 60, 'since': start}
     res = requests.get(url, params=params)
     data = res.json()
-    df = pd.DataFrame(data['result'][ticker],
-                      columns=['timestamp', 'open', 'high', 'low', 'close', 'vwap', 'volume', 'count'])
+    print(data)
+    if ticker == "XBTUSD":
+        df = pd.DataFrame(data['result']["XXBTZUSD"])
+    else:
+        df = pd.DataFrame(data['result'][ticker])
+    df.columns = ['timestamp', 'open', 'high', 'low', 'close', 'vwap', 'volume', 'count']
+
+    # Convert the columns to float
+    df = df.apply(pd.to_numeric, errors='coerce')
+
     df['ticker'] = ticker
-    df = df[df['timestamp'] <= end]
     return df
 
 

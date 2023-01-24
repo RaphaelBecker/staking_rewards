@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 def main():
     st.set_page_config(page_title="Kraken Staking Calculator", page_icon=":chart_with_upwards_trend:", layout="wide")
-    st.title("CSV to DataFrame")
+    st.title("Kraken Staking Calculator")
 
     uploaded_file = st.file_uploader("Upload a CSV file", type=["csv"])
     required_columns = ["txid", "refid", "time", "type", "subtype", "aclass", "asset", "amount", "fee", "balance"]
@@ -25,14 +25,16 @@ def main():
                 st.success("Time column parsed as datetime objects.")
             except ValueError:
                 st.warning("An error occurred while trying to parse the 'time' column.")
-            st.dataframe(df)
+            with st.expander("Raw Data"):
+                st.dataframe(df)
 
             df = df.query('type.str.contains("staking")', engine='python')
             df = df.groupby(['time', 'asset']).sum().reset_index()
             df = df.pivot(index='time', columns='asset', values='amount')
 
             df_accumulated = df.cumsum()
-            st.dataframe(df_accumulated)
+            with st.expander("Accumulated Rewards"):
+                st.dataframe(df_accumulated)
 
             columns_to_plot = [col for col in df_accumulated.columns if '.S' in col]
             # assets = df_accumulated['asset'].unique()
