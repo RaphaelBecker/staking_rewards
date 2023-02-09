@@ -89,7 +89,7 @@ def main():
 
             # cut dataframe before start_date because database will only contian data later than start_date:
             # Create a boolean mask based on the comparison between the dates and the given date
-            mask_rew = rewards_df.index >= pd.to_datetime(start_date)
+            mask_rew = (rewards_df.index >= pd.to_datetime(start_date)) & (rewards_df.index <= pd.to_datetime(end_date))
 
             # Use the mask to select only the rows that are equal to or greater than the given date
             rewards_df = rewards_df[mask_rew]
@@ -172,7 +172,7 @@ def main():
                 # Create figure and set axes for subplots
                 plt.style.use('seaborn-white')
 
-                plt.rcParams.update({'font.size': 4})
+                plt.rcParams.update({'font.size': 5})
 
                 fig = plt.figure()
 
@@ -190,9 +190,8 @@ def main():
                 ax_rewards_line.yaxis.set_major_locator(plt.MaxNLocator(nbins=5, integer=True))
 
                 ax_rewards_bar.legend(loc='lower left', fontsize='small', frameon=True, fancybox=True)
-                ax_rewards_bar.get_legend().set_title("on receive")
+                ax_rewards_bar.get_legend().set_title("Rewards received")
                 ax_rewards_bar.set_ylabel(asset.rstrip('.S'), size=4)
-                ax_rewards_bar.set_title("Rewards received")
 
                 ax_rewards_line.legend(loc='lower left', fontsize='small', frameon=True, fancybox=True)
                 ax_rewards_line.get_legend().set_title("Rewards received in base currency")
@@ -219,7 +218,7 @@ def main():
                 ax_cummulated_rewards.get_legend().set_title("Rewards received accumulated")
                 ax_cummulated_rewards.set_ylabel(asset.rstrip('.S'), size=4)
                 ax_cummulated_rewards_base_currency.legend(loc='lower left', fontsize='small', frameon=True, fancybox=True)
-                ax_cummulated_rewards_base_currency.get_legend().set_title("Compared value on continuous sale on receive or on latest date")
+                ax_cummulated_rewards_base_currency.get_legend().set_title("Value on continuous sale vs. on timestamp")
                 ax_cummulated_rewards_base_currency.set_ylabel(base_currency, size=4)
 
                 st.pyplot(fig)
