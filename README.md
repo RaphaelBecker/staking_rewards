@@ -1,9 +1,14 @@
 # staking_rewards
-Streamlit app to visualize and calcultate the staking rewards received by kraken csv file over time
+Streamlit app to visualize and calcultate the staking rewards received by kraken csv file over a chosen time.
+How To:
+1. Export your ledger.csv file from Kraken
+2. start app and drop the ledger.csv file to the upload field 
+
 
 ## Requirements
 1. on Mac OS: Docker is mandatory
 2. on Windows: Docker is optional
+3. Only Kraken ledgers CSV fiel supported 
 
 
 ## Installation with Docker
@@ -27,8 +32,10 @@ To install the app using batch scripts on Windows 10, follow these steps:
 2. Run app by double click ```start_app.bat```
 3. App should appear in browser on local URL: ```http://localhost:8501```
 
+
 ## License
 This project is licensed under the [MIT License](https://github.com/RaphaelBecker/staking_rewards/blob/main/LICENCE.md).
+
 
 ## Preview:
 
