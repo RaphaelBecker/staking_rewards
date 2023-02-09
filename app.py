@@ -191,11 +191,11 @@ def main():
                                alpha=0.5, label=asset + appendix, marker='.')
                 ax_rewards_line.yaxis.set_major_locator(plt.MaxNLocator(nbins=5, integer=True))
 
-                ax_rewards_bar.legend(loc='lower left', fontsize='small', frameon=True, fancybox=True)
+                ax_rewards_bar.legend(loc='best', fontsize='small', frameon=True, fancybox=True)
                 ax_rewards_bar.get_legend().set_title("Rewards received")
                 ax_rewards_bar.set_ylabel(asset.rstrip('.S'), size=4)
 
-                ax_rewards_line.legend(loc='lower left', fontsize='small', frameon=True, fancybox=True)
+                ax_rewards_line.legend(loc='best', fontsize='small', frameon=True, fancybox=True)
                 ax_rewards_line.get_legend().set_title("Rewards received in base currency")
                 ax_rewards_line.set_ylabel(base_currency, size=4)
 
@@ -215,10 +215,10 @@ def main():
                 ax_cummulated_rewards_base_currency.plot(rewards_df_only_values_base_currency_accumulated.index, rewards_df_only_values_base_currency_accumulated.astype(float),
                                alpha=0.5, label=asset + "_" + base_currency + "_ONREC", marker='.')
                 ax_cummulated_rewards_base_currency.yaxis.set_major_locator(plt.MaxNLocator(nbins=10, integer=True))
-                ax_cummulated_rewards.legend(loc='lower left', fontsize='small', frameon=True, fancybox=True)
+                ax_cummulated_rewards.legend(loc='best', fontsize='small', frameon=True, fancybox=True)
                 ax_cummulated_rewards.get_legend().set_title("Rewards received accumulated")
                 ax_cummulated_rewards.set_ylabel(asset.rstrip('.S'), size=4)
-                ax_cummulated_rewards_base_currency.legend(loc='lower left', fontsize='small', frameon=True, fancybox=True)
+                ax_cummulated_rewards_base_currency.legend(loc='best', fontsize='small', frameon=True, fancybox=True)
                 ax_cummulated_rewards_base_currency.get_legend().set_title("Value on continuous sale vs. on timestamp")
                 ax_cummulated_rewards_base_currency.set_ylabel(base_currency, size=4)
 
