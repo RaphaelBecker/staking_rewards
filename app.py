@@ -20,12 +20,13 @@ def main():
         # used to determine if asset is in base currency
         appendix = '_' + base_currency
 
-    today = datetime.date.today()
-    tomorrow = today + datetime.timedelta(days=1)
+    end_date = datetime.date.today()
+    start_date = end_date - datetime.timedelta(days=680)
     with col2:
-        start_date = st.date_input('Start date', today)
+        # kraken provides max 720 datapoints per request
+        start_date = st.date_input('From date', start_date)
     with col3:
-        end_date = st.date_input('End date', tomorrow)
+        end_date = st.date_input('To date', end_date)
     if start_date > end_date:
         st.error('Error: End date must fall after start date.')
 
@@ -60,11 +61,16 @@ def main():
 
             # min DatetimeIndex in rewards_df:
             min_datetime_index = rewards_df.index.min()
+            min_datetime_index_normalized = min_datetime_index.normalize().timestamp()
+            st.text(
+                f"Min timestamp in dataframe: {min_datetime_index} as linux timestamp: {min_datetime_index_normalized} \\")
+            if min_datetime_index > start_date:
+                start_date = min_datetime_index
+                st.info(f"Kraken only provides max 720 days of data, therefore start date set to: {start_date}" )
+
 
             # parse min_datetime_index to linux timestamp:
-            date_format = '%Y-%m-%d %H:%M:%S'
-            dt = pd.to_datetime(min_datetime_index, format=date_format)
-            min_datetime_index_timestamp = dt.timestamp() - 172800  # 2 days earlier as buffer
+            min_datetime_index_timestamp = start_date - datetime.timedelta(days=1)  # 1 days earlier as buffer
 
             st.subheader("Fiat exchange and reward overview")
 
@@ -78,7 +84,15 @@ def main():
                         ticker_list.append(asset)
                     # update database with given ticker list:
                     data_requests.add_list_of_ohlc(ticker_list, min_datetime_index_timestamp)
-                st.success("Updated: " + str(ticker_list) + " from last: " + str(dt))
+                st.success("Updated: " + str(ticker_list) + " from last: " + str(start_date))
+
+
+            # cut dataframe before start_date because database will only contian data later than start_date:
+            # Create a boolean mask based on the comparison between the dates and the given date
+            mask_rew = rewards_df.index >= pd.to_datetime(start_date)
+
+            # Use the mask to select only the rows that are equal to or greater than the given date
+            rewards_df = rewards_df[mask_rew]
 
             # Calculate accumulated rewards
             df_accumulated = rewards_df.cumsum()
@@ -98,8 +112,11 @@ def main():
                         # timestamp normalized to midnight:
                         date_normalized = date.normalize().timestamp()
                         # print(f"Date: {date} normalized: {date.normalize()}, Column: {col}, Value: {value}")
+                        print("LOGG: ###############################")
+                        print(ticker)
+                        print(date_normalized)
                         reward_in_base_currency = data_requests.get_ticker_from_db(ticker, date_normalized)
-                        # print(reward_in_base_currency)
+                        print(reward_in_base_currency)
                         reward_in_base_currency_val = float(value) * float(reward_in_base_currency["close"])
                         rewards_df.at[date, col + appendix] = str(round(reward_in_base_currency_val, 2))
 
@@ -113,6 +130,9 @@ def main():
                         # timestamp normalized to midnight:
                         date_normalized = date.normalize().timestamp()
                         # print(f"Date: {date} normalized: {date.normalize()}, Column: {col}, Value: {value}")
+                        print("LOGG: ###############################")
+                        print(ticker)
+                        print(date_normalized)
                         reward_in_base_currency = data_requests.get_ticker_from_db(ticker, date_normalized)
                         # print(reward_in_base_currency)
                         reward_in_base_currency_val = float(value) * float(reward_in_base_currency["close"])
@@ -144,6 +164,9 @@ def main():
                 st.subheader(str(asset))
                 st.text("Received between " + str(from_date) + " - " + str(to_date))
                 st.text("Total reward received: " + str(round(df_accumulated[asset].max(), 6)) + ' ' + asset.rstrip('.S'))
+                acc_worth = str(round(df_accumulated[asset + "_" + str(base_currency)].astype(float).dropna().iloc[-1], 6))
+                acc_on_sale_worth = str(round(rewards_df[asset + "_" + str(base_currency) + "_ONREC"].astype(float).dropna().iloc[-1], 6))
+                st.text("Worth last: " + acc_worth + " " + str(base_currency) + ". Worth on contiunous sale: " + acc_on_sale_worth + " " + str(base_currency))
                 # st.bar_chart(df_accumulated[asset])
 
                 # Create figure and set axes for subplots
@@ -153,46 +176,51 @@ def main():
 
                 fig = plt.figure()
 
-                ax_rewards_bar = fig.add_axes((0, 0.3, 1, 0.1))
-                ax_rewards_line = fig.add_axes((0, 0.2, 1, 0.1), sharex=ax_rewards_bar)
+                ax_rewards_bar = fig.add_axes((0, 0.6, 1, 0.2))
+                ax_rewards_line = fig.add_axes((0, 0.4, 1, 0.2), sharex=ax_rewards_bar)
                 # Format x-axis ticks as dates
                 ax_rewards_bar.xaxis_date()
                 ax_rewards_line.xaxis_date()
                 rewards_df_only_values = rewards_df[asset].dropna()
                 rewards_df_only_values_base_currency = rewards_df[asset + appendix].dropna()
-                ax_rewards_bar.bar(rewards_df_only_values.index, rewards_df_only_values,
+                ax_rewards_bar.bar(rewards_df_only_values.index, rewards_df_only_values.astype(float),
                                alpha=0.5, label=asset)
-                ax_rewards_line.plot(rewards_df_only_values_base_currency.index, rewards_df_only_values_base_currency,
+                ax_rewards_line.plot(rewards_df_only_values_base_currency.index, rewards_df_only_values_base_currency.astype(float),
                                alpha=0.5, label=asset + appendix, marker='.')
+                ax_rewards_line.yaxis.set_major_locator(plt.MaxNLocator(nbins=5, integer=True))
 
                 ax_rewards_bar.legend(loc='lower left', fontsize='small', frameon=True, fancybox=True)
                 ax_rewards_bar.get_legend().set_title("on receive")
                 ax_rewards_bar.set_ylabel(asset.rstrip('.S'), size=4)
+                ax_rewards_bar.set_title("Rewards received")
+
                 ax_rewards_line.legend(loc='lower left', fontsize='small', frameon=True, fancybox=True)
-                ax_rewards_line.get_legend().set_title("on receive")
+                ax_rewards_line.get_legend().set_title("Rewards received in base currency")
                 ax_rewards_line.set_ylabel(base_currency, size=4)
 
-                ax_cummulated_bar = fig.add_axes((0, 0.1, 1, 0.1), sharex=ax_rewards_line)
-                ax_cummulated_line = fig.add_axes((0, 0.0, 1, 0.1), sharex=ax_cummulated_bar)
+                ax_cummulated_rewards = fig.add_axes((0, 0.2, 1, 0.2), sharex=ax_rewards_line)
+                ax_cummulated_rewards_base_currency = fig.add_axes((0, 0.0, 1, 0.2), sharex=ax_cummulated_rewards)
                 # Format x-axis ticks as dates
-                ax_cummulated_bar.xaxis_date()
-                ax_cummulated_line.xaxis_date()
+                ax_cummulated_rewards.xaxis_date()
+                ax_cummulated_rewards_base_currency.xaxis_date()
                 accumulated_rewards_df_only_values = df_accumulated[asset].dropna()
                 # for comparison: Accumulated value of rewards on time of receive
                 rewards_df_only_values_base_currency_accumulated = rewards_df[asset + "_" + base_currency + "_ONREC"].dropna()
+                print(rewards_df_only_values_base_currency_accumulated)
                 df_accumulated_base_currency = df_accumulated[asset + appendix].dropna()
-                ax_cummulated_bar.plot(accumulated_rewards_df_only_values.index, accumulated_rewards_df_only_values,
+                ax_cummulated_rewards.plot(accumulated_rewards_df_only_values.index, accumulated_rewards_df_only_values.astype(float),
                                    alpha=0.5, label=asset, marker='.')
-                ax_cummulated_line.plot(df_accumulated_base_currency.index, df_accumulated_base_currency,
+                ax_cummulated_rewards_base_currency.plot(df_accumulated_base_currency.index, df_accumulated_base_currency.astype(float),
                                    alpha=0.5, label=asset + appendix, marker='.')
-                ax_cummulated_line.plot(rewards_df_only_values_base_currency_accumulated.index, rewards_df_only_values_base_currency_accumulated,
+                ax_cummulated_rewards_base_currency.plot(rewards_df_only_values_base_currency_accumulated.index, rewards_df_only_values_base_currency_accumulated.astype(float),
                                alpha=0.5, label=asset + "_" + base_currency + "_ONREC", marker='.')
-                ax_cummulated_bar.legend(loc='lower left', fontsize='small', frameon=True, fancybox=True)
-                ax_cummulated_bar.get_legend().set_title("accumulated")
-                ax_cummulated_bar.set_ylabel(asset.rstrip('.S'), size=4)
-                ax_cummulated_line.legend(loc='lower left', fontsize='small', frameon=True, fancybox=True)
-                ax_cummulated_line.get_legend().set_title("accumulated")
-                ax_cummulated_line.set_ylabel(base_currency, size=4)
+                ax_cummulated_rewards_base_currency.yaxis.set_major_locator(plt.MaxNLocator(nbins=10, integer=True))
+                ax_cummulated_rewards.legend(loc='lower left', fontsize='small', frameon=True, fancybox=True)
+                ax_cummulated_rewards.get_legend().set_title("Rewards received accumulated")
+                ax_cummulated_rewards.set_ylabel(asset.rstrip('.S'), size=4)
+                ax_cummulated_rewards_base_currency.legend(loc='lower left', fontsize='small', frameon=True, fancybox=True)
+                ax_cummulated_rewards_base_currency.get_legend().set_title("Compared value on continuous sale on receive or on latest date")
+                ax_cummulated_rewards_base_currency.set_ylabel(base_currency, size=4)
 
                 st.pyplot(fig)
 

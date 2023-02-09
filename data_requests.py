@@ -4,6 +4,7 @@ import datetime
 # DB Management
 import requests
 import sqlalchemy as sqlalchemy
+import streamlit as st
 
 db_name = 'HLOCV.db'
 root_dir0 = pathlib.Path(__file__).resolve().parents[0]
@@ -63,6 +64,8 @@ def get_ticker_from_db(ticker, timestamp):
     """
     sqlite_query_string = sqlalchemy.sql.text(f"SELECT * FROM {ticker} WHERE timestamp = '{timestamp}'")
     df = pd.read_sql(sqlite_query_string, con=conn)
+    if df.empty:
+        st.error(f"ticker: {ticker} or/and timestamp: {timestamp} not in database")
     return df
 
 
