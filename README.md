@@ -32,4 +32,4 @@ This project is licensed under the [MIT License](LICENSE).
 
 ## Preview:
 
-<img align="center" height="300px" src="https://github.com/RaphaelBecker/staking_rewards/blob/main/previews/preview.gif">  
+<img align="center" height="500px" src="https://github.com/RaphaelBecker/staking_rewards/blob/main/previews/preview.gif">  
