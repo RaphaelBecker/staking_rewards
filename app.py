@@ -146,11 +146,10 @@ def main():
                 ax_rewards.xaxis_date()
                 rewards_df_only_values = rewards_df[asset].dropna()
                 rewards_df_only_values_base_currency = rewards_df[asset + appendix].dropna()
-                print(rewards_df_only_values)
                 ax_rewards.plot(rewards_df_only_values.index, rewards_df_only_values,
                                alpha=0.5, label=asset, marker='o')
                 ax_rewards.plot(rewards_df_only_values_base_currency.index, rewards_df_only_values_base_currency,
-                               alpha=0.5, label=asset + appendix, marker='o')
+                               alpha=0.5, label=asset + appendix, style='o--')
 
                 ax_rewards.legend(loc='lower left', fontsize='small', frameon=True, fancybox=True)
                 ax_rewards.get_legend().set_title("on receive")
@@ -160,11 +159,10 @@ def main():
                 ax_cummulated.xaxis_date()
                 accumulated_rewards_df_only_values = df_accumulated[asset].dropna()
                 df_accumulated_base_currency = df_accumulated[asset + appendix].dropna()
-                print(accumulated_rewards_df_only_values)
                 ax_cummulated.plot(accumulated_rewards_df_only_values.index, accumulated_rewards_df_only_values,
                                    alpha=0.5, label=asset, marker='o')
                 ax_cummulated.plot(df_accumulated_base_currency.index, df_accumulated_base_currency,
-                                   alpha=0.5, label=asset + appendix, marker='o')
+                                   alpha=0.5, label=asset + appendix, style='o--')
                 ax_cummulated.legend(loc='lower left', fontsize='small', frameon=True, fancybox=True)
                 ax_cummulated.get_legend().set_title("accumulated")
 
