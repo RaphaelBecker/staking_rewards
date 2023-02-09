@@ -156,6 +156,11 @@ def main():
                 st.dataframe(df_accumulated)
 
             for asset in reward_assets:
+                try:
+                    acc_worth = str(round(df_accumulated[asset + "_" + str(base_currency)].astype(float).dropna().iloc[-1], 6))
+                    acc_on_sale_worth = str(round(rewards_df[asset + "_" + str(base_currency) + "_ONREC"].astype(float).dropna().iloc[-1], 6))
+                except IndexError:
+                    continue
                 # first date
                 # last date
                 from_date = df_accumulated.index.min()
@@ -163,8 +168,6 @@ def main():
                 st.subheader(str(asset))
                 st.text("Received between " + str(from_date) + " - " + str(to_date))
                 st.text("Total reward received: " + str(round(df_accumulated[asset].max(), 6)) + ' ' + asset.rstrip('.S'))
-                acc_worth = str(round(df_accumulated[asset + "_" + str(base_currency)].astype(float).dropna().iloc[-1], 6))
-                acc_on_sale_worth = str(round(rewards_df[asset + "_" + str(base_currency) + "_ONREC"].astype(float).dropna().iloc[-1], 6))
                 st.text("Worth last: " + acc_worth + " " + str(base_currency) + ". Worth on contiunous sale: " + acc_on_sale_worth + " " + str(base_currency))
                 # st.bar_chart(df_accumulated[asset])
 
