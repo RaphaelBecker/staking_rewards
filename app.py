@@ -12,9 +12,13 @@ def main():
     st.set_page_config(page_title="Kraken Staking Calculator", page_icon=":chart_with_upwards_trend:", layout="wide")
     st.title("Kraken Staking Calculator")
 
+    uploaded_file = st.file_uploader("Upload a CSV file", type=["csv"])
+
     col1, col2, col3 = st.columns(3)
     with col1:
         base_currency = st.selectbox('Select base currency', ('EUR', 'USD'))
+        # used to determine if asset is in base currency
+        appendix = '_' + base_currency
 
     today = datetime.date.today()
     tomorrow = today + datetime.timedelta(days=1)
@@ -24,8 +28,6 @@ def main():
         end_date = st.date_input('End date', tomorrow)
     if start_date > end_date:
         st.error('Error: End date must fall after start date.')
-
-    uploaded_file = st.file_uploader("Upload a CSV file", type=["csv"])
 
     if uploaded_file is not None:
         df = pd.read_csv(uploaded_file)
@@ -78,8 +80,6 @@ def main():
                     data_requests.add_list_of_ohlc(ticker_list, min_datetime_index_timestamp)
                 st.success("Updated: " + str(ticker_list) + " from last: " + str(dt))
 
-            appendix = '_' + base_currency
-
             # Calculate accumulated rewards
             df_accumulated = rewards_df.cumsum()
 
@@ -102,7 +102,7 @@ def main():
                         # print(reward_in_base_currency)
                         reward_in_base_currency_val = float(value) * float(reward_in_base_currency["close"])
                         rewards_df.at[date, col + appendix] = str(round(reward_in_base_currency_val, 2))
-            
+
             # Development of value of accumulated rewards at timestamp:
             for date, row in df_accumulated.T.iteritems():
                 for col, value in row.iteritems():
@@ -132,33 +132,43 @@ def main():
                 st.subheader(str(asset))
                 st.text("Received between " + str(from_date) + " - " + str(to_date))
                 st.text("Total reward received: " + str(round(df_accumulated[asset].max(), 6)))
-                #st.bar_chart(df_accumulated[asset])
+                # st.bar_chart(df_accumulated[asset])
 
                 # Create figure and set axes for subplots
                 plt.style.use('seaborn-white')
 
-                plt.rcParams.update({'font.size': 8})
+                plt.rcParams.update({'font.size': 4})
 
                 fig = plt.figure()
 
-                ax_rewards = fig.add_axes((0, 0.1, 1, 0.1))
+                ax_rewards = fig.add_axes((0, 0.2, 1, 0.2))
                 # Format x-axis ticks as dates
                 ax_rewards.xaxis_date()
                 rewards_df_only_values = rewards_df[asset].dropna()
+                rewards_df_only_values_base_currency = rewards_df[asset + appendix].dropna()
                 print(rewards_df_only_values)
-                ax_rewards.bar(rewards_df_only_values.index, rewards_df_only_values,
-                      alpha=0.5, label=asset)
+                ax_rewards.plot(rewards_df_only_values.index, rewards_df_only_values,
+                               alpha=0.5, label=asset, marker='o')
+                ax_rewards.plot(rewards_df_only_values_base_currency.index, rewards_df_only_values_base_currency,
+                               alpha=0.5, label=asset + appendix, marker='o')
 
-                ax_cummulated = fig.add_axes((0, 0.0, 1, 0.1), sharex=ax_rewards)
+                ax_rewards.legend(loc='lower left', fontsize='small', frameon=True, fancybox=True)
+                ax_rewards.get_legend().set_title("on receive")
+
+                ax_cummulated = fig.add_axes((0, 0.0, 1, 0.2), sharex=ax_rewards)
                 # Format x-axis ticks as dates
                 ax_cummulated.xaxis_date()
                 accumulated_rewards_df_only_values = df_accumulated[asset].dropna()
+                df_accumulated_base_currency = df_accumulated[asset + appendix].dropna()
                 print(accumulated_rewards_df_only_values)
                 ax_cummulated.plot(accumulated_rewards_df_only_values.index, accumulated_rewards_df_only_values,
-                      alpha=0.5, label=asset, marker='o')
+                                   alpha=0.5, label=asset, marker='o')
+                ax_cummulated.plot(df_accumulated_base_currency.index, df_accumulated_base_currency,
+                                   alpha=0.5, label=asset + appendix, marker='o')
+                ax_cummulated.legend(loc='lower left', fontsize='small', frameon=True, fancybox=True)
+                ax_cummulated.get_legend().set_title("accumulated")
 
                 st.pyplot(fig)
-
 
 
 if __name__ == '__main__':
