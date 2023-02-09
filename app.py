@@ -118,6 +118,18 @@ def main():
                         reward_in_base_currency_val = float(value) * float(reward_in_base_currency["close"])
                         df_accumulated.at[date, col + appendix] = str(round(reward_in_base_currency_val, 2))
 
+            # Accumulate received asset in base currency on time of reward.
+            # # Just as you would have sold the rewards immediately
+            # Get columns with base_currency in their name
+            columns_of_interest = [col for col in rewards_df.columns if base_currency in col]
+            # Accumulate the values in the selected columns
+            acc_df = rewards_df[columns_of_interest].astype(float).cumsum()
+            # Rename the columns with "_ACC" suffix
+            acc_df.columns = [col + '_ONREC' for col in acc_df.columns]
+            # Concatenate the accumulated values with the original dataframe
+            rewards_df = pd.concat([rewards_df, acc_df], axis=1)
+
+
             # display dataframes on frontend:
             with st.expander("Rewards: Reward in base currency is the value of received reward at timestamp"):
                 st.dataframe(rewards_df)
@@ -131,7 +143,7 @@ def main():
                 to_date = df_accumulated.index.max()
                 st.subheader(str(asset))
                 st.text("Received between " + str(from_date) + " - " + str(to_date))
-                st.text("Total reward received: " + str(round(df_accumulated[asset].max(), 6)))
+                st.text("Total reward received: " + str(round(df_accumulated[asset].max(), 6)) + ' ' + asset.rstrip('.S'))
                 # st.bar_chart(df_accumulated[asset])
 
                 # Create figure and set axes for subplots
@@ -141,30 +153,46 @@ def main():
 
                 fig = plt.figure()
 
-                ax_rewards = fig.add_axes((0, 0.2, 1, 0.2))
+                ax_rewards_bar = fig.add_axes((0, 0.3, 1, 0.1))
+                ax_rewards_line = fig.add_axes((0, 0.2, 1, 0.1), sharex=ax_rewards_bar)
                 # Format x-axis ticks as dates
-                ax_rewards.xaxis_date()
+                ax_rewards_bar.xaxis_date()
+                ax_rewards_line.xaxis_date()
                 rewards_df_only_values = rewards_df[asset].dropna()
                 rewards_df_only_values_base_currency = rewards_df[asset + appendix].dropna()
-                ax_rewards.plot(rewards_df_only_values.index, rewards_df_only_values,
-                               alpha=0.5, label=asset, marker='o')
-                ax_rewards.plot(rewards_df_only_values_base_currency.index, rewards_df_only_values_base_currency,
+                ax_rewards_bar.bar(rewards_df_only_values.index, rewards_df_only_values,
+                               alpha=0.5, label=asset)
+                ax_rewards_line.plot(rewards_df_only_values_base_currency.index, rewards_df_only_values_base_currency,
                                alpha=0.5, label=asset + appendix, marker='.')
 
-                ax_rewards.legend(loc='lower left', fontsize='small', frameon=True, fancybox=True)
-                ax_rewards.get_legend().set_title("on receive")
+                ax_rewards_bar.legend(loc='lower left', fontsize='small', frameon=True, fancybox=True)
+                ax_rewards_bar.get_legend().set_title("on receive")
+                ax_rewards_bar.set_ylabel(asset.rstrip('.S'), size=4)
+                ax_rewards_line.legend(loc='lower left', fontsize='small', frameon=True, fancybox=True)
+                ax_rewards_line.get_legend().set_title("on receive")
+                ax_rewards_line.set_ylabel(base_currency, size=4)
 
-                ax_cummulated = fig.add_axes((0, 0.0, 1, 0.2), sharex=ax_rewards)
+                ax_cummulated_bar = fig.add_axes((0, 0.1, 1, 0.1), sharex=ax_rewards_line)
+                ax_cummulated_line = fig.add_axes((0, 0.0, 1, 0.1), sharex=ax_cummulated_bar)
                 # Format x-axis ticks as dates
-                ax_cummulated.xaxis_date()
+                ax_cummulated_bar.xaxis_date()
+                ax_cummulated_line.xaxis_date()
                 accumulated_rewards_df_only_values = df_accumulated[asset].dropna()
+                # for comparison: Accumulated value of rewards on time of receive
+                rewards_df_only_values_base_currency_accumulated = rewards_df[asset + "_" + base_currency + "_ONREC"].dropna()
                 df_accumulated_base_currency = df_accumulated[asset + appendix].dropna()
-                ax_cummulated.plot(accumulated_rewards_df_only_values.index, accumulated_rewards_df_only_values,
-                                   alpha=0.5, label=asset, marker='o')
-                ax_cummulated.plot(df_accumulated_base_currency.index, df_accumulated_base_currency,
+                ax_cummulated_bar.plot(accumulated_rewards_df_only_values.index, accumulated_rewards_df_only_values,
+                                   alpha=0.5, label=asset, marker='.')
+                ax_cummulated_line.plot(df_accumulated_base_currency.index, df_accumulated_base_currency,
                                    alpha=0.5, label=asset + appendix, marker='.')
-                ax_cummulated.legend(loc='lower left', fontsize='small', frameon=True, fancybox=True)
-                ax_cummulated.get_legend().set_title("accumulated")
+                ax_cummulated_line.plot(rewards_df_only_values_base_currency_accumulated.index, rewards_df_only_values_base_currency_accumulated,
+                               alpha=0.5, label=asset + "_" + base_currency + "_ONREC", marker='.')
+                ax_cummulated_bar.legend(loc='lower left', fontsize='small', frameon=True, fancybox=True)
+                ax_cummulated_bar.get_legend().set_title("accumulated")
+                ax_cummulated_bar.set_ylabel(asset.rstrip('.S'), size=4)
+                ax_cummulated_line.legend(loc='lower left', fontsize='small', frameon=True, fancybox=True)
+                ax_cummulated_line.get_legend().set_title("accumulated")
+                ax_cummulated_line.set_ylabel(base_currency, size=4)
 
                 st.pyplot(fig)
 
