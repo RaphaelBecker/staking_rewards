@@ -149,7 +149,7 @@ def main():
                 ax_rewards.plot(rewards_df_only_values.index, rewards_df_only_values,
                                alpha=0.5, label=asset, marker='o')
                 ax_rewards.plot(rewards_df_only_values_base_currency.index, rewards_df_only_values_base_currency,
-                               alpha=0.5, label=asset + appendix, style='o--')
+                               alpha=0.5, label=asset + appendix, marker='.')
 
                 ax_rewards.legend(loc='lower left', fontsize='small', frameon=True, fancybox=True)
                 ax_rewards.get_legend().set_title("on receive")
@@ -162,7 +162,7 @@ def main():
                 ax_cummulated.plot(accumulated_rewards_df_only_values.index, accumulated_rewards_df_only_values,
                                    alpha=0.5, label=asset, marker='o')
                 ax_cummulated.plot(df_accumulated_base_currency.index, df_accumulated_base_currency,
-                                   alpha=0.5, label=asset + appendix, style='o--')
+                                   alpha=0.5, label=asset + appendix, marker='.')
                 ax_cummulated.legend(loc='lower left', fontsize='small', frameon=True, fancybox=True)
                 ax_cummulated.get_legend().set_title("accumulated")
 
