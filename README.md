@@ -28,7 +28,7 @@ To install the app using batch scripts on Windows 10, follow these steps:
 3. App should appear in browser on local URL: ```http://localhost:8501```
 
 ## License
-This project is licensed under the [MIT License](LICENSE).
+This project is licensed under the [MIT License](https://github.com/RaphaelBecker/staking_rewards/blob/main/LICENCE.md).
 
 ## Preview:
 
