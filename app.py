@@ -1,4 +1,5 @@
 import datetime
+from sqlite3 import OperationalError
 
 import numpy as np
 import streamlit as st
@@ -21,7 +22,7 @@ def main():
         appendix = '_' + base_currency
 
     end_date = datetime.date.today()
-    start_date = end_date - datetime.timedelta(days=680)
+    start_date = end_date - datetime.timedelta(days=650)
     with col2:
         # kraken provides max 720 datapoints per request
         start_date = st.date_input('From date', start_date)
@@ -29,6 +30,7 @@ def main():
         end_date = st.date_input('To date', end_date)
     if start_date > end_date:
         st.error('Error: End date must fall after start date.')
+        st.stop()
 
     if uploaded_file is not None:
         df = pd.read_csv(uploaded_file)
@@ -63,10 +65,10 @@ def main():
             min_datetime_index = rewards_df.index.min()
             min_datetime_index_normalized = min_datetime_index.normalize().timestamp()
             st.text(
-                f"Min timestamp in dataframe: {min_datetime_index} as linux timestamp: {min_datetime_index_normalized} \\")
+                f"Min timestamp in provided csv: {min_datetime_index} App is able to process data from {start_date}")
             if min_datetime_index > start_date:
-                start_date = min_datetime_index
-                st.info(f"Kraken only provides max 720 days of data, therefore start date set to: {start_date}" )
+                st.warning(f"Kraken only provides max 720 days of historical data choose a earlier start date!")
+                st.stop()
 
 
             # parse min_datetime_index to linux timestamp:
@@ -112,11 +114,11 @@ def main():
                         # timestamp normalized to midnight:
                         date_normalized = date.normalize().timestamp()
                         # print(f"Date: {date} normalized: {date.normalize()}, Column: {col}, Value: {value}")
-                        print("LOGG: ###############################")
-                        print(ticker)
-                        print(date_normalized)
-                        reward_in_base_currency = data_requests.get_ticker_from_db(ticker, date_normalized)
-                        print(reward_in_base_currency)
+                        try:
+                            reward_in_base_currency = data_requests.get_ticker_from_db(ticker, date_normalized)
+                        except:
+                            st.warning("Database out of date. Please update database!")
+                            st.stop()
                         reward_in_base_currency_val = float(value) * float(reward_in_base_currency["close"])
                         rewards_df.at[date, col + appendix] = str(round(reward_in_base_currency_val, 2))
 
@@ -130,9 +132,6 @@ def main():
                         # timestamp normalized to midnight:
                         date_normalized = date.normalize().timestamp()
                         # print(f"Date: {date} normalized: {date.normalize()}, Column: {col}, Value: {value}")
-                        print("LOGG: ###############################")
-                        print(ticker)
-                        print(date_normalized)
                         reward_in_base_currency = data_requests.get_ticker_from_db(ticker, date_normalized)
                         # print(reward_in_base_currency)
                         reward_in_base_currency_val = float(value) * float(reward_in_base_currency["close"])
@@ -205,7 +204,6 @@ def main():
                 accumulated_rewards_df_only_values = df_accumulated[asset].dropna()
                 # for comparison: Accumulated value of rewards on time of receive
                 rewards_df_only_values_base_currency_accumulated = rewards_df[asset + "_" + base_currency + "_ONREC"].dropna()
-                print(rewards_df_only_values_base_currency_accumulated)
                 df_accumulated_base_currency = df_accumulated[asset + appendix].dropna()
                 ax_cummulated_rewards.plot(accumulated_rewards_df_only_values.index, accumulated_rewards_df_only_values.astype(float),
                                    alpha=0.5, label=asset, marker='.')

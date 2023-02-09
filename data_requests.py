@@ -66,6 +66,7 @@ def get_ticker_from_db(ticker, timestamp):
     df = pd.read_sql(sqlite_query_string, con=conn)
     if df.empty:
         st.error(f"ticker: {ticker} or/and timestamp: {timestamp} not in database")
+        st.stop()
     return df
 
 
