@@ -2,7 +2,7 @@
 Streamlit app to visualize and calcultate the staking rewards received by kraken csv file over a chosen time.
 How To:
 1. Export your ledger.csv file from Kraken
-2. start app and drop the ledger.csv file to the upload field 
+2. Start app and drop the ledger.csv file to the upload field 
 
 
 ## Requirements
