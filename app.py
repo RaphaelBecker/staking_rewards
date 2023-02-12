@@ -172,17 +172,15 @@ def main():
                 # st.bar_chart(df_accumulated[asset])
 
                 # Create figure and set axes for subplots
-                plt.style.use('seaborn-white')
 
                 plt.rcParams.update({'font.size': 5})
 
                 fig = plt.figure()
 
-                ax_rewards_bar = fig.add_axes((0, 0.6, 1, 0.2))
-                ax_rewards_line = fig.add_axes((0, 0.4, 1, 0.2), sharex=ax_rewards_bar)
-                # Format x-axis ticks as dates
-                ax_rewards_bar.xaxis_date()
-                ax_rewards_line.xaxis_date()
+                ax_rewards_bar = fig.add_axes((0, 0.7, 1, 0.1))
+                ax_cummulated_rewards = fig.add_axes((0, 0.6, 1, 0.1), sharex=ax_rewards_bar)
+                ax_rewards_line = fig.add_axes((0, 0.4, 1, 0.2), sharex=ax_cummulated_rewards)
+
                 rewards_df_only_values = rewards_df[asset].dropna()
                 rewards_df_only_values_base_currency = rewards_df[asset + appendix].dropna()
                 ax_rewards_bar.bar(rewards_df_only_values.index, rewards_df_only_values.astype(float),
@@ -192,15 +190,14 @@ def main():
                 ax_rewards_line.yaxis.set_major_locator(plt.MaxNLocator(nbins=5, integer=True))
 
                 ax_rewards_bar.legend(loc='best', fontsize='small', frameon=True, fancybox=True)
-                ax_rewards_bar.get_legend().set_title("Rewards received")
+                ax_rewards_bar.get_legend().set_title("Rewards")
                 ax_rewards_bar.set_ylabel(asset.rstrip('.S'), size=4)
 
                 ax_rewards_line.legend(loc='best', fontsize='small', frameon=True, fancybox=True)
-                ax_rewards_line.get_legend().set_title("Rewards received in base currency")
+                ax_rewards_line.get_legend().set_title("Rewards in base currency")
                 ax_rewards_line.set_ylabel(base_currency, size=4)
 
-                ax_cummulated_rewards = fig.add_axes((0, 0.2, 1, 0.2), sharex=ax_rewards_line)
-                ax_cummulated_rewards_base_currency = fig.add_axes((0, 0.0, 1, 0.2), sharex=ax_cummulated_rewards)
+                ax_cummulated_rewards_base_currency = fig.add_axes((0, 0.0, 1, 0.4), sharex=ax_rewards_line)
                 # Format x-axis ticks as dates
                 ax_cummulated_rewards.xaxis_date()
                 ax_cummulated_rewards_base_currency.xaxis_date()
@@ -208,15 +205,25 @@ def main():
                 # for comparison: Accumulated value of rewards on time of receive
                 rewards_df_only_values_base_currency_accumulated = rewards_df[asset + "_" + base_currency + "_ONREC"].dropna()
                 df_accumulated_base_currency = df_accumulated[asset + appendix].dropna()
+                # calculate difference between value of accumulated rewards and gain on continuous sale of rewards:
+                difference_df = df_accumulated_base_currency.astype(float) - rewards_df_only_values_base_currency_accumulated.astype(float)
                 ax_cummulated_rewards.plot(accumulated_rewards_df_only_values.index, accumulated_rewards_df_only_values.astype(float),
                                    alpha=0.5, label=asset, marker='.')
                 ax_cummulated_rewards_base_currency.plot(df_accumulated_base_currency.index, df_accumulated_base_currency.astype(float),
                                    alpha=0.5, label=asset + appendix, marker='.')
                 ax_cummulated_rewards_base_currency.plot(rewards_df_only_values_base_currency_accumulated.index, rewards_df_only_values_base_currency_accumulated.astype(float),
-                               alpha=0.5, label=asset + "_" + base_currency + "_ONREC", marker='.')
+                               alpha=0.5, label=asset + "_" + base_currency + "_ONSALE", marker='.')
+                ax_cummulated_rewards_base_currency.axhline(y=0, color='grey', alpha=0.5, linestyle='-')
+                ax_cummulated_rewards_base_currency.plot(difference_df.index, difference_df.astype(float),
+                               alpha=0.5, label="DIFFERENCE", color='grey')
+
+                ax_cummulated_rewards_base_currency.fill_between(difference_df.index, difference_df, 0, where=(difference_df >= 0), color='g', alpha=0.3)
+                ax_cummulated_rewards_base_currency.fill_between(difference_df.index, difference_df, 0, where=(difference_df <= 0), color='r', alpha=0.3)
+
+
                 ax_cummulated_rewards_base_currency.yaxis.set_major_locator(plt.MaxNLocator(nbins=10, integer=True))
                 ax_cummulated_rewards.legend(loc='best', fontsize='small', frameon=True, fancybox=True)
-                ax_cummulated_rewards.get_legend().set_title("Rewards received accumulated")
+                ax_cummulated_rewards.get_legend().set_title("Rewards accumulated")
                 ax_cummulated_rewards.set_ylabel(asset.rstrip('.S'), size=4)
                 ax_cummulated_rewards_base_currency.legend(loc='best', fontsize='small', frameon=True, fancybox=True)
                 ax_cummulated_rewards_base_currency.get_legend().set_title("Value on continuous sale vs. on timestamp")
