@@ -15,11 +15,14 @@ def main():
 
     uploaded_file = st.file_uploader("Upload a CSV file", type=["csv"])
 
-    col1, col2, col3 = st.columns(3)
-    with col1:
+    col0, col1, col2, col3 = st.columns(4)
+    with col0:
         base_currency = st.selectbox('Select base currency', ('EUR', 'USD'))
         # used to determine if asset is in base currency
         appendix = '_' + base_currency
+
+    with col1:
+        day_price = st.selectbox('Rewards sold on (daily price)', ('close', 'low', 'high'))
 
     end_date = datetime.date.today()
     start_date = end_date - datetime.timedelta(days=650)
@@ -119,7 +122,7 @@ def main():
                         except:
                             st.warning("Database out of date. Please update database!")
                             st.stop()
-                        reward_in_base_currency_val = float(value) * float(reward_in_base_currency["close"])
+                        reward_in_base_currency_val = float(value) * float(reward_in_base_currency[day_price])
                         rewards_df.at[date, col + appendix] = str(round(reward_in_base_currency_val, 2))
 
             # Development of value of accumulated rewards at timestamp:
@@ -134,7 +137,7 @@ def main():
                         # print(f"Date: {date} normalized: {date.normalize()}, Column: {col}, Value: {value}")
                         reward_in_base_currency = data_requests.get_ticker_from_db(ticker, date_normalized)
                         # print(reward_in_base_currency)
-                        reward_in_base_currency_val = float(value) * float(reward_in_base_currency["close"])
+                        reward_in_base_currency_val = float(value) * float(reward_in_base_currency[day_price])
                         df_accumulated.at[date, col + appendix] = str(round(reward_in_base_currency_val, 2))
 
             # Accumulate received asset in base currency on time of reward.
@@ -230,6 +233,11 @@ def main():
                 ax_cummulated_rewards_base_currency.set_ylabel(base_currency, size=4)
 
                 st.pyplot(fig)
+                # st.dataframe(pd.concat([rewards_df_only_values, rewards_df_only_values_base_currency, df_accumulated_base_currency], axis=1))
+                st.dataframe(rewards_df_only_values)
+                st.dataframe(rewards_df_only_values_base_currency)
+                st.dataframe(df_accumulated_base_currency)
+
 
 
 if __name__ == '__main__':
