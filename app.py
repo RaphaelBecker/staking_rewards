@@ -6,6 +6,7 @@ import streamlit as st
 import pandas as pd
 import data_requests as data_requests
 import matplotlib.pyplot as plt
+from fpdf import FPDF
 
 
 def main():
@@ -103,7 +104,7 @@ def main():
             df_accumulated = rewards_df.cumsum()
 
             for col_name in reward_assets:
-                new_col_name = col_name + appendix
+                new_col_name = col_name + appendix + "_ACC"
                 rewards_df[new_col_name] = np.nan
                 df_accumulated[new_col_name] = np.nan
 
@@ -138,7 +139,7 @@ def main():
                         reward_in_base_currency = data_requests.get_ticker_from_db(ticker, date_normalized)
                         # print(reward_in_base_currency)
                         reward_in_base_currency_val = float(value) * float(reward_in_base_currency[day_price])
-                        df_accumulated.at[date, col + appendix] = str(round(reward_in_base_currency_val, 2))
+                        df_accumulated.at[date, col + appendix + "_ACC"] = str(round(reward_in_base_currency_val, 2))
 
             # Accumulate received asset in base currency on time of reward.
             # # Just as you would have sold the rewards immediately
@@ -160,7 +161,7 @@ def main():
 
             for asset in reward_assets:
                 try:
-                    acc_worth = str(round(df_accumulated[asset + "_" + str(base_currency)].astype(float).dropna().iloc[-1], 6))
+                    acc_worth = str(round(df_accumulated[asset + "_" + str(base_currency)  + "_ACC"].astype(float).dropna().iloc[-1], 6))
                     acc_on_sale_worth = str(round(rewards_df[asset + "_" + str(base_currency) + "_ONREC"].astype(float).dropna().iloc[-1], 6))
                 except IndexError:
                     continue
@@ -207,13 +208,13 @@ def main():
                 accumulated_rewards_df_only_values = df_accumulated[asset].dropna()
                 # for comparison: Accumulated value of rewards on time of receive
                 rewards_df_only_values_base_currency_accumulated = rewards_df[asset + "_" + base_currency + "_ONREC"].dropna()
-                df_accumulated_base_currency = df_accumulated[asset + appendix].dropna()
+                df_accumulated_base_currency = df_accumulated[asset + appendix  + "_ACC"].dropna()
                 # calculate difference between value of accumulated rewards and gain on continuous sale of rewards:
                 difference_df = df_accumulated_base_currency.astype(float) - rewards_df_only_values_base_currency_accumulated.astype(float)
                 ax_cummulated_rewards.plot(accumulated_rewards_df_only_values.index, accumulated_rewards_df_only_values.astype(float),
                                    alpha=0.5, label=asset, marker='.')
                 ax_cummulated_rewards_base_currency.plot(df_accumulated_base_currency.index, df_accumulated_base_currency.astype(float),
-                                   alpha=0.5, label=asset + appendix, marker='.')
+                                   alpha=0.5, label=asset + appendix + "_ACC", marker='.')
                 ax_cummulated_rewards_base_currency.plot(rewards_df_only_values_base_currency_accumulated.index, rewards_df_only_values_base_currency_accumulated.astype(float),
                                alpha=0.5, label=asset + "_" + base_currency + "_ONSALE", marker='.')
                 ax_cummulated_rewards_base_currency.axhline(y=0, color='grey', alpha=0.5, linestyle='-')
@@ -233,10 +234,10 @@ def main():
                 ax_cummulated_rewards_base_currency.set_ylabel(base_currency, size=4)
 
                 st.pyplot(fig)
-                # st.dataframe(pd.concat([rewards_df_only_values, rewards_df_only_values_base_currency, df_accumulated_base_currency], axis=1))
-                st.dataframe(rewards_df_only_values)
-                st.dataframe(rewards_df_only_values_base_currency)
-                st.dataframe(df_accumulated_base_currency)
+                st.dataframe(pd.concat([rewards_df_only_values, rewards_df_only_values_base_currency, rewards_df_only_values_base_currency_accumulated], axis=1))
+                #st.dataframe(rewards_df_only_values)
+                #st.dataframe(rewards_df_only_values_base_currency)
+                #st.dataframe(df_accumulated_base_currency)
 
 
 
