@@ -181,8 +181,8 @@ def main():
                     st.subheader(str(asset))
                     st.text(total_text_str)
                     # text to html:
-                    html_subheader_txt = f"<h2> " + str(i) + "  " + str(asset) + "</h2>"
-                    html_short_asset_stats_txt = "<h5>" + total_text_str + "</h5>"
+                    html_subheader_txt = f'<h3 style="padding: 0px; margin: 0px;">' + str(i) + "  " + str(asset) + "</h3>"
+                    html_short_asset_stats_txt = f'<p style="padding: 0; margin: 0;">' + total_text_str + "</p>"
 
                     # Create figure and set axes for subplots
                     plt.rcParams.update({'font.size': 5})
@@ -248,9 +248,9 @@ def main():
                     buf = io.BytesIO()
                     fig_canvas.print_png(buf)
                     fig_data = base64.b64encode(buf.getbuffer()).decode("utf8")
-                    html_fig = f"""<img src="data:image/png;base64,{fig_data}" width="900">"""
+                    html_fig = f"""<img style="padding: 0px; margin: 0px;" src="data:image/png;base64,{fig_data}" width="900">"""
                     html_summary_df = summary_df.to_html()
-                    html_body_str = html_body_str + html_subheader_txt + html_short_asset_stats_txt + html_fig + html_summary_df
+                    html_body_str = html_body_str + html_subheader_txt + html_fig + html_summary_df + html_short_asset_stats_txt
                     st.dataframe(summary_df)
                     #st.dataframe(rewards_df_only_values)
                     #st.dataframe(rewards_df_only_values_base_currency)
@@ -267,6 +267,8 @@ def main():
                 </body>
             </html>
             """
+
+            print(html)
 
             pdfkit.from_string(html, 'report.pdf')
 
