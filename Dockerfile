@@ -10,6 +10,9 @@ COPY requirements.txt /app/requirements.txt
 # Install the dependencies listed in the requirements.txt file
 RUN pip3 install -r requirements.txt
 
+# Install html to pdf external library
+Run apt-get install wkhtmltopdf
+
 # Copy the local app.py and datarequester.py files into the container at /app
 COPY app.py /app/app.py
 COPY data_requests.py /app/data_requests.py

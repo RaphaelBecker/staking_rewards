@@ -9,6 +9,10 @@ How To:
 1. on Mac OS: Docker is mandatory
 2. on Windows: Docker is optional
 3. Only Kraken ledgers CSV fiel supported 
+Only on Windows:
+4. PdfKit installed: https://github.com/JazzCore/python-pdfkit/wiki/Installing-wkhtmltopdf
+   * After installation and adding to PATH + restart of OS, verify if module can be found in cmd:
+     * ```where wkhtmltopdf```
 
 
 ## Installation with Docker
