@@ -8,6 +8,10 @@ __pycache__/
 
 # csv data
 data/
+*.csv
+
+# databases
+*.db
 
 # Distribution / packaging
 .Python

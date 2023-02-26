@@ -1,11 +1,13 @@
 import datetime
 from sqlite3 import OperationalError
-
+import io
 import numpy as np
 import streamlit as st
 import pandas as pd
 import data_requests as data_requests
 import matplotlib.pyplot as plt
+from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+import base64
 import pdfkit
 
 
@@ -160,8 +162,8 @@ def main():
                 st.dataframe(df_accumulated)
 
             with st.spinner('Generating stats ...'):
-
-                for asset in reward_assets:
+                html_body_str = ""
+                for i, asset in enumerate(reward_assets):
                     try:
                         acc_worth = str(round(df_accumulated[asset + "_" + str(base_currency)  + "_ACC"].astype(float).dropna().iloc[-1], 6))
                         acc_on_sale_worth = str(round(rewards_df[asset + "_" + str(base_currency) + "_ONREC"].astype(float).dropna().iloc[-1], 6))
@@ -171,14 +173,18 @@ def main():
                     # last date
                     from_date = df_accumulated.index.min()
                     to_date = df_accumulated.index.max()
+                    received_between_str = "<p>" + "Received between " + str(from_date) + " - " + str(to_date)  + "</p>"
+                    total_rewards_received_str = "<p>" + "Total reward received: " + str(round(df_accumulated[asset].max(), 6)) + ' ' + asset.rstrip('.S')  + "</p>"
+                    worth_total_recieved_str = "<p>" + "Worth last: " + acc_worth + " " + str(base_currency) + ". Worth on contiunous sale: " + acc_on_sale_worth + " " + str(base_currency)  + "</p>"
+                    total_text_str = received_between_str + total_rewards_received_str + worth_total_recieved_str
+                    # text to canvas:
                     st.subheader(str(asset))
-                    st.text("Received between " + str(from_date) + " - " + str(to_date))
-                    st.text("Total reward received: " + str(round(df_accumulated[asset].max(), 6)) + ' ' + asset.rstrip('.S'))
-                    st.text("Worth last: " + acc_worth + " " + str(base_currency) + ". Worth on contiunous sale: " + acc_on_sale_worth + " " + str(base_currency))
-                    # st.bar_chart(df_accumulated[asset])
+                    st.text(total_text_str)
+                    # text to html:
+                    html_subheader_txt = f"<h2> " + str(i) + "  " + str(asset) + "</h2>"
+                    html_short_asset_stats_txt = "<h5>" + total_text_str + "</h5>"
 
                     # Create figure and set axes for subplots
-
                     plt.rcParams.update({'font.size': 5})
 
                     fig = plt.figure()
@@ -236,10 +242,33 @@ def main():
                     ax_cummulated_rewards_base_currency.set_ylabel(base_currency, size=4)
 
                     st.pyplot(fig)
-                    st.dataframe(pd.concat([rewards_df_only_values, rewards_df_only_values_base_currency, rewards_df_only_values_base_currency_accumulated], axis=1))
+                    summary_df = pd.concat([rewards_df_only_values, rewards_df_only_values_base_currency, rewards_df_only_values_base_currency_accumulated], axis=1)
+
+                    fig_canvas = FigureCanvas(fig)
+                    buf = io.BytesIO()
+                    fig_canvas.print_png(buf)
+                    fig_data = base64.b64encode(buf.getbuffer()).decode("utf8")
+                    html_fig = f"""<img src="data:image/png;base64,{fig_data}" width="900">"""
+                    html_summary_df = summary_df.to_html()
+                    html_body_str = html_body_str + html_subheader_txt + html_short_asset_stats_txt + html_fig + html_summary_df
+                    st.dataframe(summary_df)
                     #st.dataframe(rewards_df_only_values)
                     #st.dataframe(rewards_df_only_values_base_currency)
                     #st.dataframe(df_accumulated_base_currency)
+
+            html = f"""
+            <html>
+                <head>
+                    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+                    <title>Kraken Staking Report</title>
+                </head>
+                <body>
+                    {html_body_str}
+                </body>
+            </html>
+            """
+
+            pdfkit.from_string(html, 'report.pdf')
 
 
 
